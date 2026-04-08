@@ -7,6 +7,8 @@ import zipfile
 import io
 import yt_dlp
 import uuid
+import imageio_ffmpeg
+import fitz
 
 app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -146,6 +148,7 @@ def convert_youtube():
         'outtmpl': os.path.join(app.config['OUTPUT_FOLDER'], f'{job_id}_%(title)s.%(ext)s'),
         'quiet': True,
         'no_warnings': True,
+        'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe()
     }
 
     if format_type == 'mp3':
@@ -210,6 +213,58 @@ def convert_exe():
         'status': 'queued', 
         'message': f'La web {url} está en cola para compilarse como aplicación .exe de Windows. Esto requiere librerías adicionales en el servidor.'
     })
+
+@app.route('/api/convert/img2pdf', methods=['POST'])
+def convert_img2pdf():
+    files = request.files.getlist('files')
+    if not files:
+        return jsonify({'error': 'No files provided'}), 400
+        
+    job_id = str(uuid.uuid4())
+    output_pdf = os.path.join(app.config['OUTPUT_FOLDER'], f"{job_id}_images.pdf")
+    
+    try:
+        images = []
+        for file in files:
+            if file.filename:
+                img = Image.open(file.stream).convert('RGB')
+                images.append(img)
+                
+        if not images:
+            return jsonify({'error': 'No valid images'}), 400
+            
+        images[0].save(output_pdf, save_all=True, append_images=images[1:], quality=95)
+        return send_file(output_pdf, as_attachment=True, download_name='imagenes_convertidas.pdf')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/convert/pdf2img', methods=['POST'])
+def convert_pdf2img():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    job_id = str(uuid.uuid4())
+    input_pdf = os.path.join(app.config['UPLOAD_FOLDER'], f"{job_id}_{file.filename}")
+    file.save(input_pdf)
+    
+    output_zip = os.path.join(app.config['OUTPUT_FOLDER'], f"{job_id}_imagenes.zip")
+    
+    try:
+        pdf_document = fitz.open(input_pdf)
+        with zipfile.ZipFile(output_zip, 'w') as zf:
+            for page_num in range(len(pdf_document)):
+                page = pdf_document.load_page(page_num)
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x zoom for better quality
+                img_io = io.BytesIO(pix.tobytes("jpeg"))
+                zf.writestr(f"page_{page_num+1}.jpg", img_io.getvalue())
+        pdf_document.close()
+        dl_name = os.path.splitext(file.filename)[0] + '_imagenes.zip'
+        return send_file(output_zip, as_attachment=True, download_name=dl_name)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/convert/pdf', methods=['POST'])
 def convert_pdf():

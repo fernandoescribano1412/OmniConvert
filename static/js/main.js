@@ -88,6 +88,34 @@ const toolsContent = {
                 <i class="ph ph-terminal-window"></i> Construir EXE
             </button>
         `
+    },
+    'img2pdf': {
+        title: 'Imágenes a PDF',
+        html: `
+            <div class="dropzone" id="dropzoneImg2Pdf" onclick="document.getElementById('img2pdfInput').click()">
+                <i class="ph ph-images dropzone-icon" style="color: var(--accent-green);"></i>
+                <p>Arrastra tus imágenes (JPG/PNG) aquí, o haz clic para seleccionarlas</p>
+                <input type="file" id="img2pdfInput" hidden accept="image/png, image/jpeg, image/jpg" multiple>
+            </div>
+            <div id="img2pdf-file-info" style="margin-top: 15px; color: var(--accent-green); text-align: center;"></div>
+            <button class="btn-primary" style="margin-top: 20px; background: var(--accent-green); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="uploadImg2Pdf()">
+                <i class="ph ph-file-pdf"></i> Unir en un PDF
+            </button>
+        `
+    },
+    'pdf2img': {
+        title: 'PDF a Imágenes (JPG)',
+        html: `
+            <div class="dropzone" id="dropzonePdf2Img" onclick="document.getElementById('pdf2imgInput').click()">
+                <i class="ph ph-file-image dropzone-icon" style="color: var(--accent-red);"></i>
+                <p>Arrastra tu archivo PDF aquí, o haz clic para seleccionar</p>
+                <input type="file" id="pdf2imgInput" hidden accept=".pdf">
+            </div>
+            <div id="pdf2img-file-info" style="margin-top: 15px; color: var(--accent-red); text-align: center;"></div>
+            <button class="btn-primary" style="margin-top: 20px; background: var(--accent-red); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="uploadPdf2Img()">
+                <i class="ph ph-images"></i> Extraer Imágenes (ZIP)
+            </button>
+        `
     }
 };
 
@@ -335,11 +363,89 @@ function uploadPdf() {
     });
 }
 
-// Add PDF event listener to setupDropzone
+function uploadImg2Pdf() {
+    const fileInput = document.getElementById('img2pdfInput');
+    if (!fileInput || fileInput.files.length === 0) {
+        alert("Por favor selecciona al menos una imagen.");
+        return;
+    }
+    showLoader('Uniendo imágenes en un PDF...');
+    
+    const formData = new FormData();
+    for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+    }
+
+    fetch('/api/convert/img2pdf', {
+        method: 'POST',
+        body: formData
+    }).then(res => {
+        if (!res.ok) throw new Error('Error al procesar');
+        return res.blob();
+    }).then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'imagenes_convertidas.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        openTool('img2pdf');
+    }).catch(err => {
+        alert("Ocurrió un error en la creación del PDF.");
+        openTool('img2pdf');
+    });
+}
+
+function uploadPdf2Img() {
+    const fileInput = document.getElementById('pdf2imgInput');
+    if (!fileInput || fileInput.files.length === 0) {
+        alert("Por favor selecciona un archivo PDF.");
+        return;
+    }
+    showLoader('Extrayendo páginas del PDF y comprimiendo en ZIP...');
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    fetch('/api/convert/pdf2img', {
+        method: 'POST',
+        body: formData
+    }).then(res => {
+        if (!res.ok) throw new Error('Error al procesar PDF');
+        return res.blob();
+    }).then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileInput.files[0].name.replace('.pdf', '_imagenes.zip').replace('.PDF', '_imagenes.zip');
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        openTool('pdf2img');
+    }).catch(err => {
+        alert("Ocurrió un error en la extracción de imágenes.");
+        openTool('pdf2img');
+    });
+}
+
+// Add event listeners
 document.addEventListener('change', function(e) {
     if(e.target && e.target.id == 'pdfInput') {
         if(e.target.files.length > 0) {
             document.getElementById('pdf-file-info').innerText = 'Documento: ' + e.target.files[0].name;
+        }
+    }
+    if(e.target && e.target.id == 'img2pdfInput') {
+        if(e.target.files.length > 0) {
+            document.getElementById('img2pdf-file-info').innerText = e.target.files.length + ' imagen(es) seleccionada(s)';
+        }
+    }
+    if(e.target && e.target.id == 'pdf2imgInput') {
+        if(e.target.files.length > 0) {
+            document.getElementById('pdf2img-file-info').innerText = 'Documento: ' + e.target.files[0].name;
         }
     }
 });
