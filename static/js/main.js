@@ -73,6 +73,21 @@ const toolsContent = {
                 <i class="ph ph-swap"></i> Convertir a Word (DOCX)
             </button>
         `
+    },
+    'exe': {
+        title: 'URL a EXE Converter',
+        html: `
+            <div class="form-group">
+                <label>URL de la aplicación web</label>
+                <input type="url" id="exe-url" class="cool-input" placeholder="https://mi-aplicacion.com">
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px;">
+                El servidor encapsulará tu web en una aplicación nativa de Windows (Electron/Nativefier). Este proceso puede tardar un poco.
+            </p>
+            <button class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);" onclick="buildExe()">
+                <i class="ph ph-terminal-window"></i> Construir EXE
+            </button>
+        `
     }
 };
 
@@ -252,6 +267,38 @@ function buildApk() {
     }).catch(err => {
         alert("Error de conexión con el constructor de APK.");
         openTool('apk');
+    });
+}
+
+function buildExe() {
+    const url = document.getElementById('exe-url').value;
+    if(!url) {
+        alert("Introduce la URL web para encapsular.");
+        return;
+    }
+    showLoader('Empaquetando en ejecutable de Windows (.exe)...');
+    
+    fetch('/api/convert/exe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+    }).then(res => res.json()).then(data => {
+        if(data.error) throw new Error(data.error);
+        
+        workareaContent.innerHTML = `
+            <div style="text-align: center;">
+                <i class="ph-fill ph-check-circle" style="font-size: 48px; color: var(--accent-green); margin-bottom: 20px;"></i>
+                <h3>¡Petición de Compilación Windows Recibida!</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">${data.message}</p>
+                <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; font-family: monospace; color: #f59e0b;">
+                    <i class="ph-fill ph-terminal"></i> npm nativefier empezará en breve en el servidor...
+                </div>
+                <button class="btn-primary" onclick="openTool('exe')" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">Volver</button>
+            </div>
+        `;
+    }).catch(err => {
+        alert("Error de conexión con el constructor de EXE.");
+        openTool('exe');
     });
 }
 

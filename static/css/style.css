@@ -280,3 +280,38 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 20px 15px;
+    }
+    .dashboard-header {
+        margin-bottom: 30px;
+    }
+    .logo {
+        flex-direction: row;
+        font-size: 2rem;
+    }
+    .logo img {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .tool-card {
+        padding: 20px 15px;
+    }
+    .workarea {
+        padding: 20px 15px;
+    }
+    .dropzone {
+        padding: 20px;
+    }
+    .login-box {
+        width: 90%;
+        padding: 30px 20px;
+    }
+}

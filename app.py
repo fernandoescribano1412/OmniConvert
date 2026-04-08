@@ -196,6 +196,21 @@ def convert_apk():
         'message': f'La petición para compilar {url} ha sido recibida. El servidor necesita configurar Android SDK para generar el APK final.'
     })
 
+@app.route('/api/convert/exe', methods=['POST'])
+def convert_exe():
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    # Simple placeholder instructions
+    app.logger.info(f"Requested Windows EXE build for {url}")
+    
+    return jsonify({
+        'status': 'queued', 
+        'message': f'La web {url} está en cola para compilarse como aplicación .exe de Windows. Esto requiere librerías adicionales en el servidor.'
+    })
+
 @app.route('/api/convert/pdf', methods=['POST'])
 def convert_pdf():
     from pdf2docx import Converter
