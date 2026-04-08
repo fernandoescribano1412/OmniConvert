@@ -203,16 +203,43 @@ def convert_apk():
 def convert_exe():
     data = request.json
     url = data.get('url')
+    name = data.get('name', 'MiWebApp')
+    
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
+        
+    bat_content = f"""@echo off
+color 0b
+echo ========================================================
+echo  Instalador de aplicacion Web para Windows - OMniConvert
+echo ========================================================
+echo.
+echo Creando acceso directo en formato app nativa...
+
+set SCRIPT="%TEMP%\\%RANDOM%-%RANDOM%.vbs"
+echo Set oWS = WScript.CreateObject("WScript.Shell") >> %SCRIPT%
+echo sLinkFile = "%USERPROFILE%\\Desktop\\{name}.lnk" >> %SCRIPT%
+echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
+echo oLink.TargetPath = "msedge.exe" >> %SCRIPT%
+echo oLink.Arguments = "--app={url}" >> %SCRIPT%
+echo oLink.WindowStyle = 1 >> %SCRIPT%
+echo oLink.Save >> %SCRIPT%
+
+cscript /nologo %SCRIPT%
+del %SCRIPT%
+
+echo.
+echo !Hecho! Revisa tu escritorio de Windows. 
+echo Ahora puedes abrir '{name}' como una aplicacion nativa independiente.
+pause
+"""
     
-    # Simple placeholder instructions
-    app.logger.info(f"Requested Windows EXE build for {url}")
-    
-    return jsonify({
-        'status': 'queued', 
-        'message': f'La web {url} está en cola para compilarse como aplicación .exe de Windows. Esto requiere librerías adicionales en el servidor.'
-    })
+    job_id = str(uuid.uuid4())
+    output_bat = os.path.join(app.config['OUTPUT_FOLDER'], f"Instalar_{job_id}.bat")
+    with open(output_bat, "w") as f:
+        f.write(bat_content)
+        
+    return send_file(output_bat, as_attachment=True, download_name=f"Instalar_{name}.bat")
 
 @app.route('/api/convert/img2pdf', methods=['POST'])
 def convert_img2pdf():

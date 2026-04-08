@@ -304,26 +304,25 @@ function buildExe() {
         alert("Introduce la URL web para encapsular.");
         return;
     }
-    showLoader('Empaquetando en ejecutable de Windows (.exe)...');
+    showLoader('Construyendo instalador nativo de Windows...');
     
     fetch('/api/convert/exe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-    }).then(res => res.json()).then(data => {
-        if(data.error) throw new Error(data.error);
-        
-        workareaContent.innerHTML = `
-            <div style="text-align: center;">
-                <i class="ph-fill ph-check-circle" style="font-size: 48px; color: var(--accent-green); margin-bottom: 20px;"></i>
-                <h3>¡Petición de Compilación Windows Recibida!</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 20px;">${data.message}</p>
-                <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; font-family: monospace; color: #f59e0b;">
-                    <i class="ph-fill ph-terminal"></i> npm nativefier empezará en breve en el servidor...
-                </div>
-                <button class="btn-primary" onclick="openTool('exe')" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">Volver</button>
-            </div>
-        `;
+        body: JSON.stringify({ url: url, name: 'MiWebApp' })
+    }).then(res => {
+        if (!res.ok) throw new Error('Error al procesar');
+        return res.blob();
+    }).then(blob => {
+        const url_blob = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url_blob;
+        a.download = 'Instalar_WebApp.bat';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url_blob);
+        openTool('exe');
     }).catch(err => {
         alert("Error de conexión con el constructor de EXE.");
         openTool('exe');
