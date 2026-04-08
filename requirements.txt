@@ -7,3 +7,5 @@ werkzeug==3.1.8
 requests==2.33.1
 yt-dlp==2026.3.17
 gunicorn==21.2.0
+PyMuPDF==1.25.3
+imageio_ffmpeg==0.6.0
