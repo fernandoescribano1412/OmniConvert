@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, jsonify, Response
+from flask import Flask, render_template, request, send_file, jsonify, session, redirect, url_for
 import os
 import rawpy
 import imageio
@@ -18,26 +18,65 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
 # --- AUTHENTICATION ---
-def check_auth(username, password):
-    # Credenciales por defecto (usuario: admin, contraseña: password)
-    # Estas se pueden cambiar editando estas variables:
-    valid_user = 'admin'
-    valid_pass = 'password'
-    return username == valid_user and password == valid_pass
-
-def authenticate():
-    return Response(
-        'Acceso denegado. Se requiere usuario y contraseña validos.\n', 401,
-        {'WWW-Authenticate': 'Basic realm="Acceso Restringido"'})
+app.secret_key = 'omniconvert_premium_secret_key'
 
 @app.before_request
 def require_login():
-    # Exceptuamos las opciones (para CORS) y archivos estaticos si lo deseamos. Aquí protegemos todo.
+    # Dejamos pasar peticiones a la ruta de login, archivos estáticos (CSS/JS) o si es preflight OPTIONS.
+    if request.path == '/login' or request.path.startswith('/static/'):
+        return
     if request.method == 'OPTIONS':
         return
-    auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-        return authenticate()
+    # Si no tiene iniciada su sesión, lo mandamos al login.
+    if not session.get('logged_in'):
+        return redirect(url_for('login', next=request.path))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = False
+    if request.method == 'POST':
+        # Validamos tu nueva contraseña única
+        if request.form.get('password') == 'omniconvertbyfer':
+            session['logged_in'] = True
+            return redirect(request.args.get('next') or url_for('index'))
+        else:
+            error = True
+            
+    # Pantalla HTML moderna y glassmorfica
+    html = '''
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Acceso - OMniConvert Pro</title>
+        <style>
+            body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+            .login-box { background: rgba(255,255,255,0.05); padding: 50px 40px; border-radius: 20px; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.2); border-left: 1px solid rgba(255,255,255,0.2);}
+            input[type="password"] { padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px; width: 90%; background: rgba(0,0,0,0.3); color: white; font-size: 16px; outline: none; transition: 0.3s;}
+            input[type="password"]:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+            button { background: #3b82f6; color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; transition: 0.3s;}
+            button:hover { background: #2563eb; transform: translateY(-2px);}
+        </style>
+    </head>
+    <body>
+        <div class="login-box">
+            <h2 style="margin-top:0; font-size: 28px;">OMniConvert Pro</h2>
+            <p style="color: #94a3b8; margin-bottom: 25px;">Introduce la contraseña para acceder</p>
+            '''
+    if error:
+        html += '<p style="color: #ef4444; margin-top: -15px; margin-bottom: 20px;">Contraseña incorrecta, intenta de nuevo.</p>'
+        
+    html += '''
+            <form method="post">
+              <input type="password" name="password" placeholder="Contraseña..." required autofocus>
+              <br>
+              <button type="submit">Desbloquear Suite</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+    return html
 # ----------------------
 
 
