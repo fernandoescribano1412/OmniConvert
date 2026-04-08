@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniConvert Pro | Premium Media Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Phosphor Icons for premium icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="animated-background"></div>
+    
+    <main class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="logo">
+                <img src="/static/logo.webp" alt="OmniConvert Logo" id="app-logo" style="width: 50px; height: 50px; border-radius: 12px; display: none;">
+                <i class="ph-fill ph-infinity" id="fallback-icon"></i>
+                <h1>OmniConvert <span>Pro</span></h1>
+            </div>
+            <p class="subtitle">La suite definitiva de conversión multimedia.</p>
+        </header>
+
+        <section class="tools-grid">
+            <!-- NEF to JPG -->
+            <div class="tool-card glass" onclick="openTool('nef')">
+                <div class="tool-icon gradient-blue">
+                    <i class="ph ph-camera"></i>
+                </div>
+                <h3>NEF a JPG</h3>
+                <p>Convierte RAW de Nikon o sube un ZIP.</p>
+            </div>
+
+            <!-- YouTube to MP3/MP4 -->
+            <div class="tool-card glass" onclick="openTool('yt')">
+                <div class="tool-icon gradient-red">
+                    <i class="ph ph-youtube-logo"></i>
+                </div>
+                <h3>Video Downloader</h3>
+                <p>Descarga YT a MP3 o MP4 en alta calidad.</p>
+            </div>
+
+            <!-- HTML/URL to APK -->
+            <div class="tool-card glass" onclick="openTool('apk')">
+                <div class="tool-icon gradient-green">
+                    <i class="ph ph-android-logo"></i>
+                </div>
+                <h3>URL a APK</h3>
+                <p>Genera apps de Android desde una web.</p>
+            </div>
+
+            <!-- PDF/DOCX -->
+            <div class="tool-card glass" onclick="openTool('pdf')">
+                <div class="tool-icon gradient-purple">
+                    <i class="ph ph-file-pdf"></i>
+                </div>
+                <h3>PDF Utils</h3>
+                <p>Convierte PDF a Word al instante.</p>
+            </div>
+        </section>
+
+        <!-- Active Tool Workarea -->
+        <section id="workarea" class="workarea glass hidden">
+            <div class="workarea-header">
+                <h2 id="workarea-title">Herramienta</h2>
+                <button class="close-btn" onclick="closeTool()"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="workarea-content" id="workarea-content">
+                <!-- Content gets injected dynamically -->
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
